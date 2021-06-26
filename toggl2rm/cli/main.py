@@ -9,6 +9,7 @@ from toml import loads
 from .config_parser import validate_config as validate
 from .utils import get_default_config, get_proj_attr
 from .. import http, extract, transform, utils, load
+from ..transform import select_drain_issues
 
 app = typer.Typer()
 logging.basicConfig(level=logging.DEBUG)
@@ -30,6 +31,8 @@ def main(ctx: typer.Context, config: Path = typer.Option(
     http.setup_redmine_auth(config["redmine"]["url"], config["redmine"]["token"], 'api_token')
     http.install()
 
+    ctx.meta['rdm_user'] = extract.get_redmine_user(config["redmine"]["url"])
+
 
 @app.command(name='validate-config')
 def validate_config(ctx: typer.Context):
@@ -38,12 +41,12 @@ def validate_config(ctx: typer.Context):
 
 
 @app.command()
-def sync(
-        ctx: typer.Context,
-        project: str,
-        since: datetime = typer.Option(..., formats=['%Y-%m-%d']),
-        until: datetime = typer.Option(..., formats=['%Y-%m-%d']),
-        dry: bool = True):
+def sync(ctx: typer.Context,
+         project: str,
+         since: datetime = typer.Option(..., formats=['%Y-%m-%d']),
+         until: datetime = typer.Option(..., formats=['%Y-%m-%d']),
+         dry: bool = True,
+         drain: bool = False):
     config = ctx.meta['config']
     if project not in config['project']:
         logging.error('No such project in config')
@@ -76,12 +79,34 @@ def sync(
     issues = transform.extract_named_objects_to_columns(issues, named_object_columns)
 
     issue_ids = petl.columns(issues)['id']
-    direct_entries, indirect_entries = petl.biselect(time_entries, lambda row: row['issue_id'] in issue_ids)
+    entries_to_load, unset_entries = petl.biselect(time_entries, lambda row: row['issue_id'] in issue_ids)
+
+    if petl.nrows(unset_entries) and drain:
+        logging.info('Using drain')
+        empty_entries, unset_entries = petl.biselect(unset_entries, lambda row: row['issue_id'] is None)
+
+        drain_issues = list(
+            petl.dicts(
+                select_drain_issues(issues,
+                                    assignee_id=ctx.meta['rdm_user']['id'],
+                                    drain_cf_id=get_proj_attr(config, project, 'rdm_drain_cf_id'))
+            )
+        )
+        if len(drain_issues) > 1:
+            logging.warning(f'Found {len(drain_issues)} drain issues. Will use only first one')
+        if len(drain_issues):
+            drain_issue = drain_issues[0]
+            drained = petl.addfield(petl.cutout(empty_entries, 'issue_id'), 'issue_id', drain_issue['id'])
+            entries_to_load = petl.cat(entries_to_load, drained)
+        else:
+            logging.error('No drain issues found')
+
+    if petl.nrows(unset_entries):
+        logging.warning(f'There\'re {petl.nrows(unset_entries)} unset entries')
 
     load.to_redmine_time(
         config["redmine"]["url"],
-        direct_entries,
+        entries_to_load,
         activity_id=get_proj_attr(config, project, 'rdm_activity_id'),
         dry=dry
     )
-

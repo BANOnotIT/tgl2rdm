@@ -28,6 +28,7 @@ def to_redmine_time(base_url: str, data, activity_id=8, dry=False):
                 'activity_id': activity_id,
                 'comments': row[desc]
             }})
+            # todo use logging
             print(jsondata)
             jsondataasbytes = jsondata.encode('utf-8')  # needs to be bytes
             req.add_header('Content-Length', str(len(jsondataasbytes)))

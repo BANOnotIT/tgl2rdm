@@ -7,18 +7,6 @@ import petl as etl
 from dateutil.parser import parse as parsedatetime
 
 
-def rename_description_to_comments(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy(True)
-    df = df.rename(columns={'description': 'comments'})
-    return df
-
-
-def get_issue_id_from_comments(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    df['issue_id'] = df['comments'].str.extract(r'#(?P<issue>\d+)').astype('object')
-    return df
-
-
 def parse_datetime(inp, date_fields: List[str]):
     return etl.convert(inp, date_fields, parsedatetime)
 
@@ -57,6 +45,7 @@ def extract_named_objects_to_columns(inp, named_object_columns: List[str]):
 
 
 def select_drain_issues(inp, assignee_id: int, drain_cf_id: int):
+    print(assignee_id, drain_cf_id)
     def is_drain(fields: list) -> bool:
         return any(map(lambda field: field['id'] == drain_cf_id and field['value'] == '1', fields))
 

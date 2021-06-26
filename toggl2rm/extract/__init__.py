@@ -62,3 +62,18 @@ def from_redmine_issues(base_url: str, **kwargs):
     json = loads(resp.read())
     logging.info(f"Got {len(json.get('issues'))} redmine issues")
     return fromdicts(json.get('issues'))
+
+
+def get_redmine_user(base_url: str):
+    try:
+        url = urllib.parse.urljoin(base_url, '/my/account.json')
+        resp = urllib.request.urlopen(url)
+    except HTTPError as e:
+        print(e)
+        # todo make error handling
+        logging.error(e.fp.read())
+        raise e
+
+    json = loads(resp.read()).get('user')
+    logging.debug(f"Got user #{json['id']}: {json['login']}")
+    return json

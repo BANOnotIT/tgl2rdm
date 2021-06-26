@@ -12,6 +12,7 @@ config_simple_schema = Schema({
     Optional('default_attrs'): {
         Optional('sprint'): str,
         Optional('rdm_activity_id'): int,
+        Optional('rdm_drain_cf_id'): int,
     },
     'project': {
         str: {
@@ -19,6 +20,7 @@ config_simple_schema = Schema({
             'tgl_project_id': int,
             Optional('sprint'): str,
             Optional('rdm_activity_id'): int,
+            Optional('rdm_drain_cf_id'): int,
         }
     }
 })
