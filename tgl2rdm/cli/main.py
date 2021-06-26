@@ -31,8 +31,6 @@ def main(ctx: typer.Context, config: Path = typer.Option(
     http.setup_redmine_auth(config["redmine"]["url"], config["redmine"]["token"], 'api_token')
     http.install()
 
-    ctx.meta['rdm_user'] = extract.get_redmine_user(config["redmine"]["url"])
-
 
 @app.command(name='validate-config')
 def validate_config(ctx: typer.Context):
@@ -48,6 +46,7 @@ def sync(ctx: typer.Context,
          dry: bool = True,
          drain: bool = False):
     config = ctx.meta['config']
+    ctx.meta['rdm_user'] = extract.get_redmine_user(config["redmine"]["url"])
 
     time_entries = get_toggl_enteries(config, project, since, until)
 
@@ -59,7 +58,7 @@ def sync(ctx: typer.Context,
     if petl.nrows(unset_entries) and drain:
         logging.info('Using drain')
 
-        drained, unset_entries = drained_entries(ctx, issues,unset_entries,project)
+        drained, unset_entries = drained_entries(ctx, issues, unset_entries, project)
 
         entries_to_load = petl.cat(entries_to_load, drained)
 
