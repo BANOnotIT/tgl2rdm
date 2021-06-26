@@ -13,4 +13,4 @@ def get_proj_attr(config, project: str, prop: str):
 
 
 def get_default_config():
-    return str(Path(typer.get_app_dir('toggl2rm')) / 'config.toml')
+    return str(Path(typer.get_app_dir('tgl2rdm')) / 'config.toml')

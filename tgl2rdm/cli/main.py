@@ -124,6 +124,7 @@ def get_toggl_enteries(config, project, since, until):
                                                    until=until.date())
     nrows = petl.nrows(time_entries)
     if nrows == 0:
+        logging.info('No entries found')
         raise typer.Exit()
     time_entries = transform.parse_datetime(time_entries, ['start', 'end', 'updated'])
     time_entries = transform.parse_duration(time_entries)
