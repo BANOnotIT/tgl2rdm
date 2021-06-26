@@ -1,4 +1,4 @@
-from schema import Schema, And, Or, Optional
+from schema import Schema, Or, Optional
 
 config_simple_schema = Schema({
     'redmine': {
@@ -10,7 +10,7 @@ config_simple_schema = Schema({
         'workspace_id': int,
     },
     Optional('default_attrs'): {
-        Optional('sprint'): str,
+        Optional('sprint_days'): int,
         Optional('rdm_activity_id'): int,
         Optional('rdm_drain_cf_id'): int,
     },
@@ -18,7 +18,7 @@ config_simple_schema = Schema({
         str: {
             'rdm_project_id': Or(str, int),
             'tgl_project_id': int,
-            Optional('sprint'): str,
+            Optional('sprint_days'): int,
             Optional('rdm_activity_id'): int,
             Optional('rdm_drain_cf_id'): int,
         }

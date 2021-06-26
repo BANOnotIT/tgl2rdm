@@ -9,7 +9,7 @@ def get_proj_attr(config, project: str, prop: str):
     elif prop in config.get('default_attrs', {}):
         return config['default_attrs'][prop]
     else:
-        raise ValueError(f'No {prop} found in {project} project or in default_attrs, but it\'s required')
+        raise ValueError(f'No "{prop}" found in "{project}" project or in default_attrs, but it\'s required')
 
 
 def get_default_config():
