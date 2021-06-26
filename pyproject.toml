@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "tgl2rdm"
+version = "0.1.0"
+description = ""
+authors = ["BANO.notIT <bano.notit@yandex.ru>"]
+readme = "README.rst"
+
+[tool.poetry.scripts]
+t2m = "tgl2rdm.__main__:app"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+typer = {extras = ["all"], version = "^0.3.2"}
+toml = "^0.10.2"
+petl = "^1.7.4"
+schema = "^0.7.4"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
