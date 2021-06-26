@@ -1,12 +1,17 @@
 import urllib
 import urllib.parse
+import urllib.parse
 import urllib.request
 from datetime import date
-from typing import Union, List, Optional
+from json import loads
+from typing import List
+from typing import Union, Optional
 from urllib.error import HTTPError
+from logging import getLogger
 
 from petl.io import fromdicts
-from json import loads
+
+logging = getLogger(__name__)
 
 USER_AGENT = 'toggl exporter <bano.notit@gmail.com>'
 
@@ -28,13 +33,32 @@ def from_toggl_timeenteries(workspace: int, projects: Optional[Union[int, List[i
     }
 
     params = {k: v for k, v in params.items() if bool(v)}
-    print(params)
     params = urllib.parse.urlencode(params)
     try:
         resp = urllib.request.urlopen(f'https://api.track.toggl.com/reports/api/v2/details?{params}')
     except HTTPError as e:
-        print(e.fp.read())
+        # todo make error handling
+        logging.error(e.fp.read())
         raise e
 
     json = loads(resp.read())
+    logging.info(f"Got {len(json.get('data'))} toggl entries")
     return fromdicts(json.get('data'))
+
+
+def from_redmine_issues(base_url: str, **kwargs):
+    params = {k: v for k, v in kwargs.items() if v is not None}
+    params = urllib.parse.urlencode(params)
+
+    try:
+        url = urllib.parse.urljoin(base_url, '/issues.json')
+        resp = urllib.request.urlopen(f'{url}?{params}')
+    except HTTPError as e:
+        print(e)
+        # todo make error handling
+        logging.error(e.fp.read())
+        raise e
+
+    json = loads(resp.read())
+    logging.info(f"Got {len(json.get('issues'))} redmine issues")
+    return fromdicts(json.get('issues'))
