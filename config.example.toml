@@ -1,0 +1,21 @@
+# comment string
+
+[redmine]
+token="token_token"
+url="https://redmine.example.com/"
+
+[toggl]
+token="token_token"
+workspace_id=70
+
+[default_attrs]
+rdm_activity_id=123
+
+[project.alias1]
+rdm_project_id=1_200
+tgl_project_id=2_200
+
+[project.alias2]
+rdm_project_id=1_100
+tgl_project_id=2_100
+rdm_activity_id=321
