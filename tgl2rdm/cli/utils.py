@@ -22,6 +22,10 @@ def get_default_config():
     return str(Path(typer.get_app_dir('tgl2rdm')) / 'config.toml')
 
 
+def get_default_logger_config():
+    return str(Path(typer.get_app_dir('tgl2rdm')) / 'logger.example.toml')
+
+
 def setup_config(ctx: typer.Context, config_path: Path):
     logging.info(f'Using config from {config_path.absolute()}')
     assert config_path.is_file(), 'asdf'

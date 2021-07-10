@@ -1,26 +1,46 @@
 import logging
+from logging import config as logging_configurator, INFO
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import petl
 import typer
+from toml import loads
 
-from .utils import get_default_config, get_proj_attr, setup_config, setup_http
+from .utils import get_default_config, get_proj_attr, setup_config, setup_http, get_default_logger_config
 from .. import extract, transform, utils, load
 from .config import config_app
+from .tgl import tgl
 
 app = typer.Typer()
 app.add_typer(config_app, name='config')
-logging.basicConfig(level=logging.DEBUG)
-logging = logging.getLogger(__name__)
+app.add_typer(tgl, name='toggl')
+log = logging.getLogger(__name__)
 
 
 @app.callback()
-def main(ctx: typer.Context, config_path: Path = typer.Option(
-    get_default_config,
-    resolve_path=True,
-)):
+def main(
+        ctx: typer.Context,
+        config_path: Path = typer.Option(
+            get_default_config,
+            resolve_path=True,
+        ),
+        logger_config: Path = typer.Option(
+            get_default_logger_config,
+            resolve_path=True,
+        ),
+):
     ctx.meta['config_path'] = config_path
+
+    if logger_config.exists():
+        if logger_config.suffix == '.toml':
+            conf = loads(logger_config.read_text())
+            logging_configurator.dictConfig(conf)
+        elif logger_config.suffix == '.ini':
+            logging_configurator.fileConfig(str(logger_config))
+    else:
+        logging.basicConfig(level=INFO)
+        log.info('Using default logger config')
 
 
 @app.command(help='Synchronize issues from toggl to readmine from --since to --until dates including')
@@ -43,17 +63,19 @@ def sync(ctx: typer.Context,
     entries_to_load, unset_entries = petl.biselect(time_entries, lambda row: row['issue_id'] in issue_ids)
 
     if drain and petl.nrows(unset_entries):
-        logging.info('Using drain')
+        log.info('Using drain')
 
         drained, unset_entries = drained_entries(ctx, issues, unset_entries, project)
+
+        log.info(f'Drained {petl.nrows(drained)} issues')
 
         entries_to_load = petl.cat(entries_to_load, drained)
 
     if petl.nrows(unset_entries):
-        logging.warning(f'There\'re {petl.nrows(unset_entries)} unset entries')
+        log.warning(f'There\'re {petl.nrows(unset_entries)} unset entries')
 
     if get_proj_attr(config, project, 'group_entries'):
-        logging.info('Using group by day and description')
+        log.info('Using group by day and description')
 
         entries_to_load = transform.group_entries_by_day(entries_to_load)
 
@@ -81,11 +103,11 @@ def drained_entries(ctx: typer.Context, issues, entries, project):
     )
 
     if not len(drain_issues):
-        logging.error('No drain issues found')
+        log.error('No drain issues found')
         return petl.head(unset_entries, 0), entries
 
     if len(drain_issues) > 1:
-        logging.warning(f'Found {len(drain_issues)} drain issues. Will use only first one')
+        log.warning(f'Found {len(drain_issues)} drain issues. Will use only first one')
 
     drain_issue = drain_issues[0]
     drained = petl.addfield(petl.cutout(empty_entries, 'issue_id'), 'issue_id', drain_issue['id'])
@@ -108,7 +130,7 @@ def get_redmine_issues(config, project, since):
 
 def get_toggl_enteries(config, project, since, until):
     if project not in config['project']:
-        logging.error('No such project in config')
+        log.error('No such project in config')
         raise typer.Exit(code=1)
     else:
         project_cfg = config['project'][project]
@@ -118,7 +140,7 @@ def get_toggl_enteries(config, project, since, until):
                                                    until=until.date())
     nrows = petl.nrows(time_entries)
     if nrows == 0:
-        logging.info('No entries found')
+        log.info('No entries found')
         raise typer.Exit()
     time_entries = transform.parse_datetime(time_entries, ['start', 'end', 'updated'])
     time_entries = transform.parse_duration(time_entries)

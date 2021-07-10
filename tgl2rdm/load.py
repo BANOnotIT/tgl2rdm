@@ -25,6 +25,8 @@ def to_redmine_time(base_url: str, data, activity_id, user_id, dry=False):
         'errored': 0
     }
 
+    if dry: logging.info('Using dry run')
+
     for row in it:
         entry = {
             'user_id': user_id,
