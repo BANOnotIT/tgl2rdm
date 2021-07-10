@@ -55,11 +55,17 @@ def select_drain_issues(inp, assignee_id: int, drain_cf_id: int):
 
 
 def group_entries_by_day(inp):
-    with_day = petl.addfield(inp, 'start_date', lambda row: row.get('start').date())
+    hdr = petl.header(inp)
 
     agg = OrderedDict()
-    agg['dur'] = 'dur', sum
+    for field in hdr:
+        # using first found value
+        agg[field] = field, next
+
+    agg['dur'] = 'dur', lambda durs: sum(durs, timedelta())
     agg['start'] = 'start', min
 
+    with_day = petl.addfield(inp, 'start_date', lambda row: row.get('start').date())
     index_keys = ('start_date', 'description')
-    return petl.transform.reductions.aggregate(with_day, index_keys, agg)
+    result = petl.aggregate(with_day, index_keys, agg)
+    return petl.cutout(result, 'start_date')
