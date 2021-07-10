@@ -9,7 +9,6 @@ from toml import loads
 from .config_parser import validate_config as validate
 from .utils import get_default_config, get_proj_attr
 from .. import http, extract, transform, utils, load
-from ..transform import select_drain_issues
 
 app = typer.Typer()
 logging.basicConfig(level=logging.DEBUG)
@@ -55,7 +54,7 @@ def sync(ctx: typer.Context,
     issue_ids = petl.columns(issues)['id']
     entries_to_load, unset_entries = petl.biselect(time_entries, lambda row: row['issue_id'] in issue_ids)
 
-    if petl.nrows(unset_entries) and drain:
+    if drain and petl.nrows(unset_entries):
         logging.info('Using drain')
 
         drained, unset_entries = drained_entries(ctx, issues, unset_entries, project)
@@ -84,9 +83,11 @@ def drained_entries(ctx: typer.Context, issues, entries, project):
 
     drain_issues = list(
         petl.dicts(
-            select_drain_issues(issues,
-                                assignee_id=ctx.meta['rdm_user']['id'],
-                                drain_cf_id=get_proj_attr(config, project, 'rdm_drain_cf_id'))
+            transform.select_drain_issues(
+                issues,
+                assignee_id=ctx.meta['rdm_user']['id'],
+                drain_cf_id=get_proj_attr(config, project, 'rdm_drain_cf_id')
+            )
         )
     )
 
