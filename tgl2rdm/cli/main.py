@@ -20,7 +20,6 @@ def main(ctx: typer.Context, config_path: Path = typer.Option(
     get_default_config,
     resolve_path=True,
 )):
-    logging.info(f'Using config from {config_path.absolute()}')
     ctx.meta['config_path'] = config_path
 
 
@@ -62,6 +61,7 @@ def sync(ctx: typer.Context,
         config["redmine"]["url"],
         entries_to_load,
         activity_id=get_proj_attr(config, project, 'rdm_activity_id'),
+        user_id=ctx.meta['rdm_user'].get('id'),
         dry=dry
     )
 

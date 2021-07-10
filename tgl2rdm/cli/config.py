@@ -72,10 +72,10 @@ def validate(ctx: typer.Context):
             get_redmine_project(config['redmine']['url'], rdm_id)
         except Exception:
             valid = False
-        tap.check(valid, f'Redmine project "{rdm_id}" accessable within alias {project_alias}')
+        tap.check(valid, f'Redmine project {rdm_id!r} accessable within alias {project_alias!r}')
 
         tgl_id = project.get("tgl_project_id")
-        tap.check(tgl_id in tgl_projects, f'Toggl project {tgl_id} accessable within alias {project_alias}')
+        tap.check(tgl_id in tgl_projects, f'Toggl project {tgl_id} accessable within alias {project_alias!r}')
 
         # todo check custom redmine fields validness
 

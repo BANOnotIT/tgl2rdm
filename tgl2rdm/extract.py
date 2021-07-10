@@ -11,10 +11,10 @@ from logging import getLogger
 
 from petl.io import fromdicts
 
-logging = getLogger(__name__)
+from .http import USER_AGENT, BASE_TOGGL_URL
 
-USER_AGENT = 'toggl exporter <bano.notit@gmail.com>'
-BASE_TOGGL_URL = 'https://api.track.toggl.com'
+rdm_log = getLogger(f'{__name__}.redmine')
+tgl_log = getLogger(f'{__name__}.toggl')
 
 
 def from_toggl_timeenteries(workspace: int, projects: Optional[Union[int, List[int]]] = None,
@@ -38,12 +38,12 @@ def from_toggl_timeenteries(workspace: int, projects: Optional[Union[int, List[i
     try:
         resp = urllib.request.urlopen(f'{BASE_TOGGL_URL}/reports/api/v2/details?{params}')
     except HTTPError as e:
-        # todo make error handling
-        logging.error(e.fp.read())
+        tgl_log.exception(e)
+        tgl_log.error(e.fp.read())
         raise e
 
     json = loads(resp.read())
-    logging.debug(f"Got {len(json.get('data'))} toggl entries")
+    tgl_log.debug(f"Got {len(json.get('data'))} toggl entries")
     return fromdicts(json.get('data'))
 
 
@@ -55,13 +55,12 @@ def from_redmine_issues(base_url: str, **kwargs):
         url = urllib.parse.urljoin(base_url, '/issues.json')
         resp = urllib.request.urlopen(f'{url}?{params}')
     except HTTPError as e:
-        print(e)
-        # todo make error handling
-        logging.error(e.fp.read())
+        rdm_log.exception(e)
+        rdm_log.error(e.fp.read())
         raise e
 
     json = loads(resp.read())
-    logging.info(f"Got {len(json.get('issues'))} redmine issues")
+    rdm_log.debug(f"Got {len(json.get('issues'))} redmine issues")
     return fromdicts(json.get('issues'))
 
 
@@ -69,12 +68,12 @@ def get_toggl_user():
     try:
         resp = urllib.request.urlopen(f'{BASE_TOGGL_URL}/api/v8/me?with_related_data=true')
     except HTTPError as e:
-        # todo make error handling
-        logging.error(e.fp.read())
+        tgl_log.exception(e)
+        tgl_log.error(e.fp.read())
         raise e
 
     json = loads(resp.read())
-    logging.info(f"Got toggl user data")
+    tgl_log.debug(f"Got toggl user data")
     return json.get('data')
 
 
@@ -83,13 +82,12 @@ def get_redmine_user(base_url: str):
         url = urllib.parse.urljoin(base_url, '/my/account.json')
         resp = urllib.request.urlopen(url)
     except HTTPError as e:
-        print(e)
-        # todo make error handling
-        logging.error(e.fp.read())
+        rdm_log.exception(e)
+        rdm_log.error(e.fp.read())
         raise e
 
     json = loads(resp.read()).get('user')
-    logging.debug(f"Got user #{json['id']}: {json['login']}")
+    rdm_log.debug(f"Got user #{json['id']}: {json['login']!r}")
     return json
 
 
@@ -98,11 +96,10 @@ def get_redmine_project(base_url: str, pid: Union[int, str]):
         url = urllib.parse.urljoin(base_url, f'/projects/{str(pid)}.json')
         resp = urllib.request.urlopen(url)
     except HTTPError as e:
-        print(e)
-        # todo make error handling
-        logging.error(e.fp.read())
+        rdm_log.exception(e)
+        rdm_log.error(e.fp.read())
         raise e
 
     json = loads(resp.read())
-    logging.debug(f"Got redmine project \"{json.get('project').get('name')}\"")
+    rdm_log.debug(f"Got redmine project {json.get('project').get('name')!r}")
     return json.get('project')
