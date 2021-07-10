@@ -1,8 +1,9 @@
 import re
+from collections import OrderedDict
 from datetime import timedelta
-from typing import Tuple, List
+from typing import List
 
-import pandas as pd
+import petl
 import petl as etl
 from dateutil.parser import parse as parsedatetime
 
@@ -45,10 +46,20 @@ def extract_named_objects_to_columns(inp, named_object_columns: List[str]):
 
 
 def select_drain_issues(inp, assignee_id: int, drain_cf_id: int):
-    print(assignee_id, drain_cf_id)
     def is_drain(fields: list) -> bool:
         return any(map(lambda field: field['id'] == drain_cf_id and field['value'] == '1', fields))
 
     # custom fields have more selectivity
     inp = etl.select(inp, 'custom_fields', is_drain)
     return etl.selecteq(inp, 'assigned_to_id', assignee_id)
+
+
+def group_entries_by_day(inp):
+    with_day = petl.addfield(inp, 'start_date', lambda row: row.get('start').date())
+
+    agg = OrderedDict()
+    agg['dur'] = 'dur', sum
+    agg['start'] = 'start', min
+
+    index_keys = ('start_date', 'description')
+    return petl.transform.reductions.aggregate(with_day, index_keys, agg)
