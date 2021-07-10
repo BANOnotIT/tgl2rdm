@@ -13,6 +13,7 @@ config_simple_schema = Schema({
         Optional('sprint_days'): int,
         Optional('rdm_activity_id'): int,
         Optional('rdm_drain_cf_id'): int,
+        Optional('group_entries'): bool,
     },
     'project': {
         str: {
@@ -21,6 +22,7 @@ config_simple_schema = Schema({
             Optional('sprint_days'): int,
             Optional('rdm_activity_id'): int,
             Optional('rdm_drain_cf_id'): int,
+            Optional('group_entries'): bool,
         }
     }
 })
