@@ -80,3 +80,6 @@ def validate(ctx: typer.Context):
         # todo check custom redmine fields validness
 
     tap.stat()
+
+    if not tap.all_valid:
+        exit(1)

@@ -41,9 +41,12 @@ def setup_http(ctx: typer.Context):
 
 class TapAsserter:
     counter = 0
+    all_valid = True
 
     def check(self, cond: bool, text: str):
         self.counter += 1
+
+        self.all_valid &= cond
 
         if cond:
             print(f'ok {self.counter} - {text}')
