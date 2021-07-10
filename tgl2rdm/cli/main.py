@@ -4,47 +4,36 @@ from pathlib import Path
 
 import petl
 import typer
-from toml import loads
 
-from .config_parser import validate_config as validate
-from .utils import get_default_config, get_proj_attr
-from .. import http, extract, transform, utils, load
+from .utils import get_default_config, get_proj_attr, setup_config, setup_http
+from .. import extract, transform, utils, load
+from .config import config_app
 
 app = typer.Typer()
+app.add_typer(config_app, name='config')
 logging.basicConfig(level=logging.DEBUG)
 logging = logging.getLogger(__name__)
 
 
 @app.callback()
-def main(ctx: typer.Context, config: Path = typer.Option(
+def main(ctx: typer.Context, config_path: Path = typer.Option(
     get_default_config,
     resolve_path=True,
-    exists=True,
-    file_okay=True,
-    dir_okay=False,
-    readable=True
 )):
-    config = loads(config.read_text())
-    ctx.meta['config'] = config
-    http.setup_toggl_auth(config["toggl"]["token"], 'api_token')
-    http.setup_redmine_auth(config["redmine"]["url"], config["redmine"]["token"], 'api_token')
-    http.install()
+    logging.info(f'Using config from {config_path.absolute()}')
+    ctx.meta['config_path'] = config_path
 
 
-@app.command(name='validate-config')
-def validate_config(ctx: typer.Context):
-    validate(ctx.meta['config'])
-    typer.echo('Config is Good!')
-
-
-@app.command()
+@app.command(help='Synchronize issues from toggl to readmine from --since to --until dates including')
 def sync(ctx: typer.Context,
-         project: str,
+         project: str = typer.Argument(..., help='The name for the project, specified in config file'),
          since: datetime = typer.Option(..., formats=['%Y-%m-%d']),
          until: datetime = typer.Option(..., formats=['%Y-%m-%d']),
-         dry: bool = True,
-         drain: bool = False):
-    config = ctx.meta['config']
+         dry: bool = typer.Option(False, help='Use log entries instead of uploading them to redmine'),
+         drain: bool = typer.Option(False, help='Use drain issues for entries without specified dest')):
+    config = setup_config(ctx, ctx.meta['config_path'])
+    setup_http(ctx)
+
     ctx.meta['rdm_user'] = extract.get_redmine_user(config["redmine"]["url"])
 
     time_entries = get_toggl_enteries(config, project, since, until)
