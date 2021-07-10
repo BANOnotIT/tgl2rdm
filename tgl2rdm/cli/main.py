@@ -65,6 +65,11 @@ def sync(ctx: typer.Context,
     if petl.nrows(unset_entries):
         logging.warning(f'There\'re {petl.nrows(unset_entries)} unset entries')
 
+    if get_proj_attr(config, project, 'group_entries'):
+        logging.info('Using group by day and description')
+
+        entries_to_load = transform.group_entries_by_day(entries_to_load)
+
     load.to_redmine_time(
         config["redmine"]["url"],
         entries_to_load,
