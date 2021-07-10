@@ -1,6 +1,6 @@
 from schema import Schema, Or, Optional
 
-config_simple_schema = Schema({
+config_schema = Schema({
     'redmine': {
         'token': str,
         'url': str,
@@ -26,10 +26,3 @@ config_simple_schema = Schema({
         }
     }
 })
-
-
-def validate_config(config: str):
-    validated = config_simple_schema.validate(config)
-    # todo: add access checks
-    # todo: add project validations check
-    return True
