@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tgl2rdm"
-version = "0.1.2"
+version = "0.1.3"
 description = ""
 authors = ["BANO.notIT <bano.notit@yandex.ru>"]
 readme = "README.rst"
@@ -14,6 +14,7 @@ typer = {extras = ["all"], version = "^0.3.2"}
 toml = "^0.10.2"
 petl = "^1.7.4"
 schema = "^0.7.4"
+python-dateutil = "^2.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
