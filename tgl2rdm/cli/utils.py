@@ -23,7 +23,7 @@ def get_default_config():
 
 
 def get_default_logger_config():
-    return str(Path(typer.get_app_dir('tgl2rdm')) / 'logger.example.toml')
+    return str(Path(typer.get_app_dir('tgl2rdm')) / 'logger.toml')
 
 
 def setup_config(ctx: typer.Context, config_path: Path):
