@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tgl2rdm"
-version = "0.1.3"
+version = "0.1.4"
 description = "Toggl Track to Redmine synchronization util"
 authors = ["BANO.notIT <bano.notit@yandex.ru>"]
 readme = "README.md"
