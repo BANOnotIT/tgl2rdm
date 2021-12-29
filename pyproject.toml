@@ -1,9 +1,15 @@
 [tool.poetry]
 name = "tgl2rdm"
 version = "0.1.3"
-description = ""
+description = "Toggl Track to Redmine synchronization util"
 authors = ["BANO.notIT <bano.notit@yandex.ru>"]
-readme = "README.rst"
+readme = "README.md"
+homepage = "https://github.com/BANOnotIT/tgl2rdm"
+classifiers = [
+  "Topic :: Internet"
+]
+keywords = [ "toggl", "redmine", "sync" ]
+include = [ "README.md", "tgl2rdm", "config.example.toml", "logger.example.toml" ]
 
 [tool.poetry.scripts]
 t2m = "tgl2rdm.__main__:app"
